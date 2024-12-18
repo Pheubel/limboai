@@ -41,7 +41,7 @@ on:
 # Global Settings
 env:
   SCONS_CACHE_LIMIT: 4096
-  SCONSFLAGS: use_mingw=yes dev_build=no
+  SCONSFLAGS: use_mingw=yes dev_build=no verbose=yes
   EM_VERSION: 3.1.45
   EM_CACHE_FOLDER: "emsdk-cache"
   GODOT_VERSION: 4.3-stable
@@ -71,14 +71,14 @@ jobs:
             should-build: true
 
           - name: 🪟 Windows (x86_64, release)
-            runner: windows-latest
+            runner: ubuntu-latest
             platform: windows
             target: template_release
             arch: x86_64
             should-build: true
 
           - name: 🪟 Windows (x86_64, debug)
-            runner: windows-latest
+            runner: ubuntu-latest
             platform: windows
             target: editor
             arch: x86_64
@@ -280,10 +280,6 @@ jobs:
           ndk-version: r23c
           link-to-sdk: true
 
-      - name: Set up MSVC problem matcher on Windows
-        if: matrix.opts.platform == 'windows'
-        uses: ammaraskar/msvc-problem-matcher@master
-
       - name: Set up scons cache
         if: inputs.test-build # ! Only cache test/PR builds
         uses: actions/cache@v4
@@ -291,9 +287,12 @@ jobs:
           path: ${{github.workspace}}/.scons_cache/
           key: ${{env.BIN}}-${{inputs.debug-symbols}}-${{inputs.godot-cpp-ref}}-${{inputs.limboai-ref}}-${{env.LIMBOAI_VERSION}}
           restore-keys: |
-            ${{env.BIN}}-${{inputs.debug-symbols}}-${{inputs.godot-cpp-ref}}-${{inputs.limboai-ref}}-${{env.LIMBOAI_VERSION}}
-            ${{env.BIN}}-${{inputs.debug-symbols}}-${{inputs.godot-cpp-ref}}-${{inputs.limboai-ref}}
-            ${{env.BIN}}-${{inputs.debug-symbols}}-${{inputs.godot-cpp-ref}}
+
+      - name: Set up MinGW
+        if: matrix.opts.platform == 'windows'
+        run: |
+          sudo apt update
+          sudo apt install g++-mingw-w64-x86-64-posix
 
       - name: Compilation
         shell: bash
